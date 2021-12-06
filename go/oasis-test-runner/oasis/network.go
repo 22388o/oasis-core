@@ -619,7 +619,6 @@ func (net *Network) startOasisNode(
 	}
 	if node.consensusStateSync != nil {
 		extraArgs = extraArgs.tendermintStateSync(
-			node.consensusStateSync.ConsensusNodes,
 			node.consensusStateSync.TrustHeight,
 			node.consensusStateSync.TrustHash,
 		)

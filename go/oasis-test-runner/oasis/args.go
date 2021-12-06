@@ -241,10 +241,30 @@ func (args *argBuilder) tendermintSentryUpstreamAddress(addrs []string) *argBuil
 	return args
 }
 
-func (args *argBuilder) tendermintDisablePeerExchange() *argBuilder {
+func (args *argBuilder) tendermintMaxConnections(num int) *argBuilder {
 	args.vec = append(args.vec, Argument{
-		Name: tendermintFull.CfgP2PDisablePeerExchange,
+		Name:   tendermintCommon.CfgP2PMaxConnections,
+		Values: []string{strconv.Itoa(num)},
 	})
+	return args
+}
+
+func (args *argBuilder) tendermintMaxPeers(num int) *argBuilder {
+	args.vec = append(args.vec, Argument{
+		Name:   tendermintCommon.CfgP2PMaxPeers,
+		Values: []string{strconv.Itoa(num)},
+	})
+	return args
+}
+
+func (args *argBuilder) tendermintWhitelistedPeers(ids []string) *argBuilder {
+	for _, id := range ids {
+		args.vec = append(args.vec, Argument{
+			Name:        tendermintCommon.CfgP2PWhitelistedPeers,
+			Values:      []string{id},
+			MultiValued: true,
+		})
+	}
 	return args
 }
 
@@ -272,7 +292,6 @@ func (args *argBuilder) tendermintDebugAllowDuplicateIP() *argBuilder {
 }
 
 func (args *argBuilder) tendermintStateSync(
-	consensusNodes []string,
 	trustHeight uint64,
 	trustHash string,
 ) *argBuilder {
@@ -281,9 +300,6 @@ func (args *argBuilder) tendermintStateSync(
 		{tendermintFull.CfgConsensusStateSyncTrustHeight, []string{strconv.FormatUint(trustHeight, 10)}, false},
 		{tendermintFull.CfgConsensusStateSyncTrustHash, []string{trustHash}, false},
 	}...)
-	for _, address := range consensusNodes {
-		args.vec = append(args.vec, Argument{tendermintFull.CfgConsensusStateSyncConsensusNode, []string{address}, true})
-	}
 	return args
 }
 
@@ -522,10 +538,16 @@ func (args *argBuilder) iasSPID(spid []byte) *argBuilder {
 
 func (args *argBuilder) addSentries(sentries []*Sentry) *argBuilder {
 	var addrs []string
+	var sentryIDs []string
 	for _, sentry := range sentries {
 		addrs = append(addrs, fmt.Sprintf("%s@127.0.0.1:%d", sentry.tlsPublicKey.String(), sentry.controlPort))
+		sentryIDs = append(sentryIDs, sentry.tmAddress)
 	}
-	return args.workerCommonSentryAddresses(addrs)
+	return args.
+		workerCommonSentryAddresses(addrs).
+		tendermintWhitelistedPeers(sentryIDs).
+		tendermintMaxPeers(len(sentries)).
+		tendermintMaxConnections(len(sentries))
 }
 
 func (args *argBuilder) addValidatorsAsSentryUpstreams(validators []*Validator) *argBuilder {
