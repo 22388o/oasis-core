@@ -676,7 +676,7 @@ func NewNode() (node *Node, err error) { // nolint: gocyclo
 		return nil, err
 	}
 
-	logger.Info("starting Oasis node")
+	logger.Info("starting Oasis node", "mode")
 
 	// Initialize Tendermint consensus backend.
 	node.Consensus, err = tendermint.New(node.svcMgr.Ctx, dataDir, node.Identity, node.Upgrader, node.Genesis)

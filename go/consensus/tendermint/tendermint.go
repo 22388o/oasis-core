@@ -27,6 +27,9 @@ const (
 
 	// ModeSeed is the name of the seed-only node consensus mode.
 	ModeSeed = "seed"
+
+	// ModeArchive is the name of the archive node consensus mode.
+	ModeArchive = "archive"
 )
 
 // Flags has the configuration flags.
@@ -47,13 +50,16 @@ func New(
 	case ModeSeed:
 		// Seed-only node.
 		return seed.New(dataDir, identity, genesisProvider)
+	case ModeArchive:
+		// Archive node.
+		return full.NewArchive(ctx, dataDir, identity, genesisProvider)
 	default:
 		return nil, fmt.Errorf("tendermint: unsupported mode: %s", mode)
 	}
 }
 
 func init() {
-	Flags.String(CfgMode, ModeFull, "tendermint mode (full, seed)")
+	Flags.String(CfgMode, ModeFull, "tendermint mode (full, seed, archive)")
 
 	_ = viper.BindPFlags(Flags)
 	Flags.AddFlagSet(common.Flags)
